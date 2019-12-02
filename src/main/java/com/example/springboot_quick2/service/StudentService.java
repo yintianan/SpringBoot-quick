@@ -38,6 +38,9 @@ public class StudentService {
     public  StudentInfo findStudentByStudentNo(String studentNo){
         return studentMapper.findStudentByStudentNo(studentNo);
     }
+    public String stuNoToStuName(String studentNo){
+        return studentMapper.stuNoToStuName(studentNo);
+    }
     public List<StudentScore> queryScore(){
         List<StudentScore> list=scoreMapper.queryScore();
         return list;
