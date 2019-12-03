@@ -5,11 +5,15 @@ import com.example.springboot_quick2.model.StudentInfo;
 import com.example.springboot_quick2.model.StudentScore;
 import com.example.springboot_quick2.model.SubjectInfo;
 import com.example.springboot_quick2.service.StudentService;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class MapperController {
@@ -40,16 +44,23 @@ public class MapperController {
     @RequestMapping(value = "/findStudentByStudentNo", method = RequestMethod.GET)
     @ResponseBody
     public StudentInfo findStudentByStudentNo(@RequestParam("studentNo") String studentNo) {
-        StudentInfo studentInfo =StudentService.findStudentByStudentNo(studentNo);
+        StudentInfo studentInfo = StudentService.findStudentByStudentNo(studentNo);
         return studentInfo;
     }
 
-    @RequestMapping("/Score")
+    @RequestMapping(value = "/stuNoToStuName/{studentNo}", method = RequestMethod.GET)
     @ResponseBody
-    public List<StudentScore> queryScore() {
-        List<StudentScore> list = StudentService.queryScore();
-        return list;
+    String stuNoToStuName(@PathVariable("studentNo") String studentNo) {
+        return StudentService.stuNoToStuName(studentNo);
     }
+
+
+//    @RequestMapping("/Score")
+//    @ResponseBody
+//    public List<StudentScore> queryScore() {
+//        List<StudentScore> list = StudentService.queryAllInfo();
+//        return list;
+//    }
 
     @RequestMapping(value = "/queryScoreById", method = RequestMethod.GET)
     @ResponseBody
@@ -61,13 +72,63 @@ public class MapperController {
     @RequestMapping(value = "/queryAllInfoByScoreId", method = RequestMethod.GET)
     @ResponseBody
     public AllStudentInfo queryAllByScoreid(@RequestParam("scoreid") int scoreid) {
-        return StudentService.queryAllByScoreid(scoreid);
+       AllStudentInfo allStudentInfo=StudentService.queryAllByScoreid(scoreid);
+
+       return  allStudentInfo;
     }
 
-    @RequestMapping(value=("/insertscore"),method = RequestMethod.POST)
-    public void insertScore(@RequestBody int subjectid,@RequestBody String studentNo,@RequestBody int studentscore){
-        StudentService.insertScore(subjectid,studentNo,studentscore);
+    @RequestMapping(value = "/PageQueryAllInfo/{pageNum}", method = RequestMethod.GET)
+    @ResponseBody
+    public Map<String,Object> PageQueryAllInfo(@PathVariable("pageNum") int pageNum) {
+        PageHelper.startPage(pageNum, 3);
+        List<AllStudentInfo> list = StudentService.queryAllInfo();
+        PageInfo<AllStudentInfo> pageInfo = new PageInfo<>(list, 3);
+        Map<String,Object> map=new HashMap<>();
+        map.put("list",list);//表本身
+        map.put("total",pageInfo.getTotal());//加入总页数
+        map.put("PageNum",pageInfo.getPageNum());//当前页数
+
+
+
+        return map;
     }
 
+    @RequestMapping(value = ("/insertscore"), method = RequestMethod.GET)
+    @ResponseBody
+    public String insertScore(@RequestParam int subjectid, @RequestParam String studentNo, @RequestParam String studentscore) {
+        float score = 0;
+        try {
+            score = Float.parseFloat(studentscore);
+        } catch (NumberFormatException e) {
+            return "分数输入格式有误";
+        }
+        int t = StudentService.insertScore(subjectid, studentNo, score);
+        if (t >0)
+            return "success";
+        else if (t == -1)
+            return "无此学号学生";
+        else if (t==-2)
+            return "此学生的课程成绩已经存在";
+        else
+            return "fail";
+    }
+
+    @RequestMapping(value = ("/updatescore"), method = RequestMethod.GET)
+    @ResponseBody
+    public String updateScore(@RequestParam String studentscore, @RequestParam String studentNo, @RequestParam int subjectid) {
+        float score = 0;
+        try {
+            score = Float.parseFloat(studentscore);
+        } catch (NumberFormatException e) {
+            return "分数输入格式有误";
+        }
+        int t = StudentService.updateScore(score, studentNo, subjectid);
+        if (t >0)
+            return "success";
+        else if (t == -1)
+            return "无此学号学生";
+        else
+            return "fail";
+    }
 
 }
