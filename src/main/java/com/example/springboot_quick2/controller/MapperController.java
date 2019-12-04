@@ -5,13 +5,10 @@ import com.example.springboot_quick2.model.StudentInfo;
 import com.example.springboot_quick2.model.StudentScore;
 import com.example.springboot_quick2.model.SubjectInfo;
 import com.example.springboot_quick2.service.StudentService;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +16,11 @@ import java.util.Map;
 public class MapperController {
     @Autowired
     private StudentService StudentService;
+
+    @RequestMapping("")
+    public String index(){
+        return "index.html";
+    }
 
     @RequestMapping("/Subject")
     @ResponseBody
@@ -72,25 +74,15 @@ public class MapperController {
     @RequestMapping(value = "/queryAllInfoByScoreId", method = RequestMethod.GET)
     @ResponseBody
     public AllStudentInfo queryAllByScoreid(@RequestParam("scoreid") int scoreid) {
-       AllStudentInfo allStudentInfo=StudentService.queryAllByScoreid(scoreid);
+        AllStudentInfo allStudentInfo = StudentService.queryAllByScoreid(scoreid);
 
-       return  allStudentInfo;
+        return allStudentInfo;
     }
 
     @RequestMapping(value = "/PageQueryAllInfo/{pageNum}", method = RequestMethod.GET)
     @ResponseBody
-    public Map<String,Object> PageQueryAllInfo(@PathVariable("pageNum") int pageNum) {
-        PageHelper.startPage(pageNum, 3);
-        List<AllStudentInfo> list = StudentService.queryAllInfo();
-        PageInfo<AllStudentInfo> pageInfo = new PageInfo<>(list, 3);
-        Map<String,Object> map=new HashMap<>();
-        map.put("list",list);//表本身
-        map.put("total",pageInfo.getTotal());//加入总页数
-        map.put("PageNum",pageInfo.getPageNum());//当前页数
-
-
-
-        return map;
+    public Map<String, Object> PageQueryAllInfo(@PathVariable("pageNum") int pageNum) {
+        return StudentService.queryAllInfo(pageNum);
     }
 
     @RequestMapping(value = ("/insertscore"), method = RequestMethod.GET)
@@ -103,11 +95,11 @@ public class MapperController {
             return "分数输入格式有误";
         }
         int t = StudentService.insertScore(subjectid, studentNo, score);
-        if (t >0)
+        if (t > 0)
             return "success";
         else if (t == -1)
             return "无此学号学生";
-        else if (t==-2)
+        else if (t == -2)
             return "此学生的课程成绩已经存在";
         else
             return "fail";
@@ -123,12 +115,17 @@ public class MapperController {
             return "分数输入格式有误";
         }
         int t = StudentService.updateScore(score, studentNo, subjectid);
-        if (t >0)
+        if (t > 0)
             return "success";
         else if (t == -1)
             return "无此学号学生";
         else
             return "fail";
+    }
+    @RequestMapping(value = ("/deletescore/{scoreid}"), method = RequestMethod.GET)
+    @ResponseBody
+    public int deleteScore(@PathVariable("scoreid")int scoreid){
+        return StudentService.deleteScoreByScoreId(scoreid);
     }
 
 }
