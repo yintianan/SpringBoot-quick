@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+
+		<script src="../webcontent/js/jquery-1.9.1.min.js" type="text/javascript"></script>
+		<script type="text/javascript">
+			$(function() { //网页初始化
+				initRow();
+				var form = document.getElementById("luru");
+				form.action = "/insertscore";
+				$("#lblWarn").html("提交");
+			});
+
+			function queryNameBySno() {
+				var sno = document.getElementById("sno").value;
+				$.ajax({
+					type: "get",
+					url: "/stuNoToStuName/" + sno,
+					contentType: "application/json; charset=utf-8",
+
+					success: function(name) {
+						if (name == "")
+							$("#name").html("<r>无此人</r>");
+						else
+							$("#name").html(name);
+
+					}
+				});
+			}
+
+			function checkAndSubmit() {
+				if ($("#sno").val() == null || $("#sno").val() == "") {
+					$("#lblWarn").html("<r>学号不能为空!</r>");
+					$("#sno").focus(); //输入焦点回到学号输入框
+					return false; //return false阻止提交form
+				}
+				if ($("#chenji").val() == null || $("#chenji").val() == "") {
+					$("#lblWarn").html("<r>成绩不能为空!</r>");
+					$("#chenji").focus(); //输入焦点回到成绩输入框
+					return false; //return false阻止提交form
+				}
+				var url=document.getElementById("luru").action;
+				var xuehao = document.getElementById("sno").value;
+				var chenji = document.getElementById("chenji").value;
+				var kemu = document.getElementsByName("subjectid").value;
+				// var param= {
+				// 	studenNo: xuehao,
+				// 	subjectid:kemu,
+				// 	studentscore:chenji,
+				// };
+				// $.get(url,param,function(res){
+				// 	alert(res);
+				// });
+				$.ajax({
+					type:get,
+					url:url+"?studenNo="+xuehao+"&&subjectid="+kemu+"&&studentscore="+chenji,
+					
+					success: function (res){
+						alert(res);
+						return false;
+					}
+				});
+				// // jquery 表单提交 
+				// $("#luru").ajaxSubmit(function(message) {
+				// 	// 对于表单提交成功后处理，message为提交页面saveReport.htm的返回内容 
+				// 	alert(message);
+				// 	return false;
+				// });
+				return false; // 必须返回false，否则表单会自己再做一次提交操作，并且页面跳转 
+
+			}
+
+			function xiugai(scoreid) {
+				var param = {
+					scoreid: scoreid
+				};
+				var xuehao = document.getElementById("sno");
+				var chenji = document.getElementById("chenji");
+				var kemu = document.getElementsByName("subjectid");
+				$.get("/queryAllInfoByScoreId", param, function(info) {
+					xuehao.value = info.studentNo;
+					chenji.value = info.studentscore;
+					var kemuvalue = info.subjectid;
+
+					for (var i = 0; i < kemu.length; i++) {
+
+						if (kemu[i].value == kemuvalue) {
+							kemu[i].click();
+						}
+					}
+					$("#lblWarn").html("修改");
+					var submit = document.getElementById("submit");
+					submit.value = "修改";
+					var form = document.getElementById("luru");
+					form.action = "/updatescore";
+				});
+
+			}
+			var pagenum = 1;
+			var totalnum = 1;
+
+			function pageUp() {
+				if (pagenum > 1) {
+					pagenum--;
+				}
+				initRow();
+			}
+
+			function pageDown() {
+				if (pagenum < totalnum) {
+					pagenum++;
+				}
+				initRow();
+			}
+
+			function initRow() { //按页数获取学生信息
+				$.ajax({
+					type: "get",
+					url: "/PageQueryAllInfo/" + pagenum,
+					contentType: "application/json; charset=utf-8",
+
+					success: function(map) { //返回的map
+						totalnum = map.total; //页总数
+						var yema = document.getElementById("yema");
+						$("#yema").html("当前页：" + pagenum + "，共" + totalnum + "页");
+						var table = document.getElementById("liebiao");
+						while (table.rows.length > 1)
+							table.deleteRow(1);
+						for (var index in map.list) {
+							var newRow = table.insertRow();
+							var score = map.list[index].studentscore;
+							var scoreid = map.list[index].scoreid;
+							var subjectid = map.list[index].subjectid;
+							var studentid = map.list[index].studentid;
+							var studentscore = map.list[index].studentscore;
+							var subjectName = map.list[index].subjectName;
+							var studentNo = map.list[index].studentNo;
+							var specialty = map.list[index].specialty;
+							var grade = map.list[index].grade;
+							var studentname = map.list[index].studentname;
+							var studentsex = map.list[index].studentsex;
+
+							var cellzhuanye = newRow.insertCell();
+							var cellnianji = newRow.insertCell();
+							var cellsno = newRow.insertCell();
+							var cellsname = newRow.insertCell();
+							var cellSex = newRow.insertCell();
+							var cellkemu = newRow.insertCell();
+							var cellchenji = newRow.insertCell();
+							var caozuo = newRow.insertCell();
+
+							cellzhuanye.innerHTML = specialty;
+							cellnianji.innerHTML = grade;
+							cellsno.innerHTML = studentNo;
+							cellsname.innerHTML = studentname;
+							cellSex.innerHTML = studentsex;
+							cellkemu.innerHTML = subjectName;
+							cellchenji.innerHTML = score;
+							caozuo.innerHTML =
+								"<a  name=\"xiugai\" onclick=\"xiugai(" + scoreid + ")\">修改</a>\\<a  name=\"xiugai\" onclick=\"isdelete(" +
+								scoreid + ")\">删除</a>";
+
+
+
+						}
+
+
+					}
+				});
+			}
+
+			function deleteStu(scoreid) {
+				$.ajax({
+					type: "get",
+					url: "/deletescore/" + scoreid,
+					contentType: "application/json; charset=utf-8",
+					success: function(row) {
+						if (row == 0) {
+							alert("fail");
+						}
+						initRow();
+					}
+				});
+			}
+
+			function isdelete(scoreid) {
+
+				if (confirm("delete?")) {
+					deleteStu(scoreid);
+				} else {
+
+				}
+			}
+		</script>
+		<link type="text/css" href="../webcontent/css/table1.css" rel="stylesheet">
+		</link>
+		<title></title>
+	</head>
+	<body>
+
+		<table id="liebiao" border="1">
+
+
+			<caption>学生成绩列表</caption>
+			<thead>
+				<tr>
+					<th>专业</th>
+					<th>年级</th>
+					<th>学号</th>
+					<th>姓名</th>
+					<th>性别</th>
+					<th>科目</th>
+					<th>成绩</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+
+			<!-- <tbody><tr><th>hha</th></tr></tbody> -->
+		</table>
+		<br />
+		<button onclick="pageUp();">上一页</button>
+		<button onclick="pageDown();">下一页</button>
+		<label id="yema"></label>
+		<br />
+
+
+
+		<h2>学生信息录入</h2>
+		<hr />
+		<form method="get" id="luru" action="" onsubmit="return checkAndSubmit();">
+			<label id="lblWarn">学生本身信息已在数据库中给出，无需添加，所以年级性别姓名无需填写</label><br />
+
+
+
+
+
+			<br />学号:
+			<input type="text" name="studentNo" id="sno" onchange="queryNameBySno();" />
+
+
+			<label id="name"></label>
+
+
+
+			<br />科目：
+			<input type="radio" name="subjectid" value="1" checked />Java语言程序设计
+			<input type="radio" name="subjectid" value="2" />高等数学
+			<input type="radio" name="subjectid" value="3" />大学英语
+
+
+			<br /> 成绩:
+			<input type="text" name="studentscore" id="chenji" />
+
+			<br /><input id="submit" type="submit" value="提交" onclick="checkAndSubmit();" />
+
+
+
+
+
+
+		</form>
+
+
+	</body>
+</html>
